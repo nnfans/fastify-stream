@@ -1,0 +1,20 @@
+{
+  "name": "fastify-stream",
+  "version": "0.1.0",
+  "description": "Fastify plugin to pipe stream",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "fastify"
+  ],
+  "author": "nnfans",
+  "license": "MIT",
+  "dependencies": {
+    "fastify-plugin": "^1.4.0"
+  },
+  "devDependencies": {
+    "standard": "^12.0.1"
+  }
+}
