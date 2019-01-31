@@ -1,7 +1,7 @@
 {
   "name": "fastify-stream",
   "version": "0.1.0",
-  "description": "Fastify plugin to pipe stream",
+  "description": "Fastify plugin to pipe media stream",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

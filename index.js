@@ -6,8 +6,6 @@ const exts = require('./lib/exts')
 const pathModule = require('path')
 
 function pipeStream (fastify, opts, done) {
-  let pipeExtensions = {}
-  let pipeExtensionId = 0
   let shared = {}
 
   // Get file size function
@@ -63,11 +61,12 @@ function pipeStream (fastify, opts, done) {
     return (typeof str === 'string' || str instanceof String)
   }
 
-  const pipe = function (req, res, path, type, optCb) {
+  const pipe = function (req, rep, path, type, optCb) {
     if (!isString(path)) {
       throw new TypeError('path must be a string value')
     }
 
+    const res = rep.res
     const total = fileSizeInfo(path)
 
     if (total == null) {
@@ -98,11 +97,11 @@ function pipeStream (fastify, opts, done) {
 
       // the event emitted seems to change based on version of node.js
       // 'close' is fired as of v6.11.5
-      res.on('close', cleanupFileStream) // https://stackoverflow.com/a/9021242
-      res.on('end', cleanupFileStream) // https://stackoverflow.com/a/16897986
-      res.on('finish', cleanupFileStream) // https://stackoverflow.com/a/14093091 - https://stackoverflow.com/a/38057516
+      res.on('close', cleanupFileStream)
+      res.on('end', cleanupFileStream)
+      res.on('finish', cleanupFileStream)
 
-      if (!ext.length || !pipeExtensions[ext]) {
+      if (!ext.length) {
         let header = {
           'Content-Length': range[1],
           'Content-Type': type,
@@ -129,7 +128,6 @@ function pipeStream (fastify, opts, done) {
           }
         })
       } else {
-        let _exts = pipeExtensions[ext]
         res.writeHead(200,
           {
             'Content-Type': type,
@@ -137,14 +135,6 @@ function pipeStream (fastify, opts, done) {
             'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
             'Access-Control-Allow-Headers': 'POST, GET, OPTIONS'
           })
-        for (var o in _exts) {
-          _exts[o](file, req, res, function () {
-            if (!res.__ended) {
-              res.__ended = true
-              res.end(0)
-            }
-          })
-        }
       }
 
       return true
@@ -153,33 +143,8 @@ function pipeStream (fastify, opts, done) {
     return false
   }
 
-  exports.on = function (ext, m) {
-    if (!pipeExtensions[ext]) {
-      pipeExtensions[ext] = []
-    }
-
-    m.pipeExtensionId = pipeExtensionId++
-    m.pipeExtensions = ext
-
-    pipeExtensions[ext].push(m)
-  }
-
-  exports.removeEvent = function (method) {
-    if (!method || !method.pipe_extension || !method.pipeExtensionId) {
-      return
-    }
-
-    if (pipeExtensions[method.pipe_extension]) {
-      var exts = pipeExtensions[method.pipe_extension]
-      for (var i = 0, ln = exts.length; i < ln; i++) {
-        if (exts[i].pipeExtensionId === method.pipeExtensionId) {
-          pipeExtensions[method.pipe_extension] = exts.splice(i, 1)
-        }
-      }
-    }
-  }
-
-  fastify.decorateReply('pipe', pipe)
+  fastify.decorate('pipe', pipe)
+  done()
 }
 
 module.exports = fp(pipeStream, {
